@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/SanthoshKumarShakkar/.claude/projects/c--Users-SanthoshKumarShakkar-Desktop-RoyalSpicy/memory/**)"
+      "Read(//c/Users/SanthoshKumarShakkar/.claude/projects/c--Users-SanthoshKumarShakkar-Desktop-RoyalSpicy/memory/**)",
+      "Bash(npm install:*)"
     ]
   }
 }

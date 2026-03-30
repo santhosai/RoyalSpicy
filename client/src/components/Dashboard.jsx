@@ -25,8 +25,11 @@ export default function Dashboard() {
           <p>Restaurant POS &nbsp;|&nbsp; Kondapur Road, Hyderabad</p>
         </div>
         <div className="header-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => navigateTo('sales')}>
+            📈 Sales
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={() => navigateTo('reports')}>
-            📊 Reports
+            👥 Customers
           </button>
           <button className="btn btn-ghost btn-sm" onClick={handleClear}>
             🗑 Clear

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { STORAGE_KEYS } from '../utils/storageKeys'
+import { saveSale } from '../hooks/useFirestore'
 
 const POSContext = createContext(null)
 
@@ -76,7 +77,10 @@ export function POSProvider({ children }) {
     setCustomers({})
   }, [setOrders, setCompleted, setCustomers])
 
-  const saveCompletedOrder = useCallback((order) => {
+  const saveCompletedOrder = useCallback(async (order) => {
+    // Save to Firestore (cloud)
+    await saveSale(order)
+    // Also keep in localStorage as local cache
     setCompleted(prev => [...prev, order])
   }, [setCompleted])
 

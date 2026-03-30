@@ -21,22 +21,32 @@ export default function PrintModal() {
     : ''
 
   const handlePrint = async () => {
+    const now = new Date()
+    const billNo = 'RS' + Date.now().toString().slice(-6)
+
+    // Full order data saved to Firestore
     const order = {
-      table: activeTable,
-      total: totals.total,
-      itemCount: items.reduce((s, x) => s + x.q, 0),
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString(),
-      payment: paymentMethod,
-      mobile: customerMobile,
-      billNo: 'RS' + Date.now().toString().slice(-6),
+      billNo,
+      table:         activeTable,
+      items:         items.map(i => ({ n: i.n, p: i.p, q: i.q })),
+      subtotal:      totals.subtotal,
+      discount:      discountPercent,
+      discountAmount: totals.discountAmount,
+      afterDiscount: totals.afterDiscount,
+      gst:           totals.gst,
+      total:         totals.total,
+      itemCount:     items.reduce((s, x) => s + x.q, 0),
+      payment:       paymentMethod,
+      mobile:        customerMobile,
+      date:          now.toLocaleDateString('en-IN'),
+      time:          now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
     }
 
-    saveCompletedOrder(order)
+    await saveCompletedOrder(order)
     trackCustomer(customerMobile, totals.total)
 
     const printed = await printReceipt(receipt)
-    showToast(printed ? '✅ Receipt printed!' : '✅ Order saved!')
+    showToast(printed ? '✅ Printed & Saved!' : '✅ Saved to Cloud!')
 
     clearTable(activeTable)
     closeModal()
@@ -56,7 +66,7 @@ export default function PrintModal() {
           onClick={handlePrint}
           disabled={isPrinting}
         >
-          {isPrinting ? '🔄 Connecting...' : '🖨️ Send to Printer'}
+          {isPrinting ? '🔄 Connecting...' : '🖨️ Confirm & Save'}
         </button>
         <button className="btn btn-secondary btn-block btn-sm" onClick={closeModal}>
           Cancel
