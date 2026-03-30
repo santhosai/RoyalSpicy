@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Royal Spicy POS">
+    <meta name="theme-color" content="#ff6b35">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Royal Spicy Restaurant POS</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+        :root {
+            --bg: #ffffff; --bg2: #f5f5f5; --txt: #1a1a1a; --txt2: #666;
+            --accent: #ff6b35; --accent-d: #e55a25;
+            --green: #2ecc71; --red: #e74c3c; --border: #e0e0e0;
+        }
+        html,body { width:100%; height:100%; font-family:'Roboto',sans-serif; background:var(--bg); color:var(--txt); overflow:hidden; position:fixed; }
+        body { display:flex; flex-direction:column; }
+        .app { display:flex; flex:1; width:100%; height:100%; overflow:hidden; }
+        .screen { display:none; flex:1; overflow-y:auto; overflow-x:hidden; padding:14px; width:100%; height:100%; }
+        .screen.active { display:flex; flex-direction:column; }
+
+        /* HEADER */
+        .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-shrink:0; }
+        .header h1 { font-size:1.7rem; font-weight:800; color:var(--accent); font-family:'Poppins',sans-serif; line-height:1; }
+        .header p { font-size:0.75rem; color:var(--txt2); }
+
+        /* BUTTONS */
+        .btn { padding:11px 18px; border:none; border-radius:8px; font-family:'Poppins',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.15s; user-select:none; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+        .btn:active { transform:scale(0.96); opacity:0.85; }
+        .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent-d)); color:white; }
+        .btn-secondary { background:var(--bg2); color:var(--txt); border:2px solid var(--accent); }
+        .btn-green { background:var(--green); color:white; }
+        .btn-red { background:var(--red); color:white; }
+        .btn-sm { padding:8px 14px; font-size:0.8rem; }
+        .btn-block { width:100%; }
+
+        /* STATS */
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; flex-shrink:0; }
+        .stat-card { background:linear-gradient(135deg,var(--bg2),var(--bg)); border:2px solid var(--accent); border-radius:10px; padding:12px; text-align:center; }
+        .stat-label { color:var(--txt2); font-size:0.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
+        .stat-value { font-size:1.6rem; font-weight:800; color:var(--accent); font-family:'Poppins',sans-serif; }
+
+        /* TABLES */
+        .tables-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        .table-btn { aspect-ratio:1; background:white; border:2px solid var(--border); border-radius:10px; color:var(--txt); font-family:'Poppins',sans-serif; font-size:1.2rem; font-weight:800; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; }
+        .table-btn:hover { border-color:var(--accent); }
+        .table-btn:active { transform:scale(0.94); }
+        .table-btn.occupied { background:var(--red); border-color:var(--red); color:white; }
+        .table-btn .t-num { font-size:1.3rem; font-weight:800; }
+        .table-btn .t-amt { font-size:0.65rem; font-weight:600; opacity:0.85; }
+
+        /* ORDERS LAYOUT */
+        .orders-layout { display:grid; grid-template-columns:1fr 290px; gap:14px; flex:1; min-height:0; }
+        .menu-panel { display:flex; flex-direction:column; gap:10px; overflow-y:auto; min-height:0; }
+        .categories-wrap { display:grid; grid-template-columns:repeat(auto-fill,minmax(85px,1fr)); gap:6px; padding:8px; background:var(--bg2); border:2px solid var(--border); border-radius:8px; max-height:220px; overflow-y:auto; flex-shrink:0; }
+        .cat-btn { padding:7px 6px; background:white; border:2px solid var(--border); border-radius:6px; color:var(--txt); font-weight:600; font-size:0.75rem; cursor:pointer; transition:all 0.15s; text-align:center; font-family:'Poppins',sans-serif; line-height:1.2; }
+        .cat-btn:hover { border-color:var(--accent); }
+        .cat-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
+        .items-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; }
+        .item-card { background:white; border:2px solid var(--border); border-radius:8px; padding:10px; cursor:pointer; transition:all 0.15s; text-align:center; }
+        .item-card:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(255,107,53,0.2); }
+        .item-card:active { transform:scale(0.95); }
+        .item-name { color:var(--txt); font-weight:600; font-size:0.8rem; margin-bottom:5px; line-height:1.2; }
+        .item-price { color:var(--accent); font-size:1rem; font-weight:800; font-family:'Poppins',sans-serif; }
+
+        /* BILL PANEL */
+        .bill-panel { background:white; border:3px solid var(--accent); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); overflow-y:auto; max-height:calc(100vh - 80px); }
+        .bill-title { font-size:1rem; font-weight:800; color:var(--accent); font-family:'Poppins',sans-serif; }
+        .bill-items { background:var(--bg2); border-radius:6px; padding:6px; flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:5px; min-height:80px; max-height:200px; }
+        .bill-item { background:white; border:1px solid var(--border); border-radius:6px; padding:7px; font-size:0.8rem; }
+        .bill-item-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:6px; }
+        .bill-item-name { font-weight:600; flex:1; font-size:0.78rem; }
+        .bill-item-price { color:var(--accent); font-weight:700; white-space:nowrap; }
+        .qty-ctrl { display:flex; gap:4px; align-items:center; justify-content:flex-end; }
+        .qty-btn { width:22px; height:22px; padding:0; border-radius:4px; border:none; cursor:pointer; font-weight:700; font-size:0.85rem; display:flex; align-items:center; justify-content:center; }
+        .qty-minus { background:var(--red); color:white; }
+        .qty-plus { background:var(--green); color:white; }
+        .qty-num { width:26px; text-align:center; font-weight:600; font-size:0.8rem; }
+        .bill-summary { background:var(--bg2); border-radius:6px; padding:8px; font-size:0.82rem; }
+        .bill-row { display:flex; justify-content:space-between; margin-bottom:5px; }
+        .bill-total-row { border-top:2px solid var(--border); padding-top:5px; color:var(--accent); font-weight:800; font-size:0.95rem; font-family:'Poppins',sans-serif; }
+        .input-wrap { display:flex; flex-direction:column; gap:3px; }
+        .input-label { font-size:0.7rem; font-weight:700; color:var(--txt2); text-transform:uppercase; letter-spacing:0.5px; }
+        .input-field { background:white; border:2px solid var(--border); border-radius:6px; padding:7px 9px; color:var(--txt); font-size:0.85rem; width:100%; font-family:'Roboto',sans-serif; }
+        .input-field:focus { outline:none; border-color:var(--accent); }
+        .pay-methods { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+        .pay-btn { padding:7px 4px; border:2px solid var(--border); border-radius:6px; background:white; color:var(--txt); font-family:'Poppins',sans-serif; font-weight:600; font-size:0.72rem; cursor:pointer; text-align:center; transition:all 0.15s; }
+        .pay-btn.selected { background:var(--accent); border-color:var(--accent); color:white; }
+
+        /* MODAL */
+        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; justify-content:center; align-items:center; padding:14px; }
+        .modal.open { display:flex; }
+        .modal-box { background:white; border:2px solid var(--accent); border-radius:10px; padding:18px; max-width:92%; width:420px; max-height:85vh; overflow-y:auto; box-shadow:0 10px 30px rgba(0,0,0,0.25); }
+        .modal-title { font-size:1.1rem; color:var(--accent); margin-bottom:12px; font-weight:800; font-family:'Poppins',sans-serif; }
+        .receipt-pre { background:var(--bg2); border:2px solid var(--border); border-radius:6px; padding:10px; font-family:'Courier New',monospace; font-size:0.62rem; color:var(--txt); white-space:pre-wrap; word-wrap:break-word; line-height:1.35; margin-bottom:10px; max-height:320px; overflow-y:auto; }
+
+        /* REPORTS */
+        .reports-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:16px; }
+        .customer-row { background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:9px; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; }
+        .cust-info { flex:1; }
+        .cust-mobile { font-weight:600; }
+        .cust-meta { font-size:0.75rem; color:var(--txt2); margin-top:2px; }
+        .cust-spent { color:var(--accent); font-weight:800; font-family:'Poppins',sans-serif; }
+
+        /* TOAST */
+        .toast { position:fixed; bottom:18px; right:18px; background:var(--green); color:white; padding:10px 15px; border-radius:6px; font-weight:700; font-size:0.85rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:9999; animation:slideUp 0.3s ease; }
+        .toast.err { background:var(--red); }
+        @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+        /* RESPONSIVE */
+        @media(max-width:900px) {
+            .orders-layout { grid-template-columns:1fr; }
+            .tables-grid { grid-template-columns:repeat(3,1fr); }
+        }
+        @media(max-width:600px) {
+            .tables-grid { grid-template-columns:repeat(3,1fr); }
+            .stats-grid { grid-template-columns:repeat(3,1fr); }
+            .stat-value { font-size:1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="screen-dash" class="screen active">
+        <div class="header">
+            <div>
+                <h1>ROYAL SPICY</h1>
+                <p>Restaurant POS &nbsp;|&nbsp; Kondapur Road, Hyderabad</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="showReports()">📊 Reports</button>
+                <button class="btn btn-sm" style="background:#fff3;border:2px solid var(--red);color:var(--red);" onclick="clearData()">🗑 Clear</button>
+            </div>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="tables-grid" id="tablesGrid"></div>
+    </div>
+
+    <!-- ===== ORDERS ===== -->
+    <div id="screen-orders" class="screen">
+        <div class="header" style="margin-bottom:10px;">
+            <div>
+                <h1 style="font-size:1.3rem;">Table <span id="tableLabel">1</span></h1>
+                <p>Add items to order</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="showDash()">← Back</button>
+        </div>
+        <div class="orders-layout">
+            <div class="menu-panel">
+                <div class="categories-wrap" id="catsWrap"></div>
+                <div style="font-weight:700;font-size:0.85rem;color:var(--txt2);font-family:'Poppins',sans-serif;" id="catTitle">Select a category above</div>
+                <div class="items-grid" id="itemsGrid">
+                    <p style="grid-column:1/-1;text-align:center;color:var(--txt2);padding:30px;">Select a category to see items</p>
+                </div>
+            </div>
+            <div class="bill-panel">
+                <div class="bill-title">🧾 Bill — Table <span id="billTableLabel">1</span></div>
+                <div class="bill-items" id="billItems">
+                    <p style="text-align:center;color:var(--txt2);padding:20px;font-size:0.8rem;">No items added</p>
+                </div>
+                <div class="bill-summary" id="billSummary">
+                    <div class="bill-row"><span>Subtotal</span><span id="s-sub">₹0.00</span></div>
+                    <div class="bill-row"><span>Discount</span><span id="s-disc" style="color:var(--red);">-₹0.00</span></div>
+                    <div class="bill-row"><span>After Discount</span><span id="s-after">₹0.00</span></div>
+                    <div class="bill-row"><span>GST (5%)</span><span id="s-gst">₹0.00</span></div>
+                    <div class="bill-row bill-total-row"><span>TOTAL</span><span id="s-total">₹0.00</span></div>
+                </div>
+                <div class="input-wrap">
+                    <label class="input-label">Discount %</label>
+                    <input class="input-field" id="discInput" type="number" min="0" max="100" value="0" placeholder="0" oninput="recalc()">
+                </div>
+                <div class="input-wrap">
+                    <label class="input-label">Customer Mobile (optional)</label>
+                    <input class="input-field" id="mobInput" type="tel" maxlength="10" placeholder="9XXXXXXXXX">
+                </div>
+                <div>
+                    <div class="input-label" style="margin-bottom:5px;">Payment Method</div>
+                    <div class="pay-methods">
+                        <button class="pay-btn selected" id="pay-Cash" onclick="selectPay('Cash')">💵 Cash</button>
+                        <button class="pay-btn" id="pay-Card" onclick="selectPay('Card')">💳 Card</button>
+                        <button class="pay-btn" id="pay-UPI" onclick="selectPay('UPI')">📱 UPI</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="previewBill()">🖨️ Preview & Print</button>
+                <button class="btn btn-red btn-block btn-sm" onclick="clearTable()">🗑 Clear Table</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== REPORTS ===== -->
+    <div id="screen-reports" class="screen">
+        <div class="header">
+            <div>
+                <h1 style="font-size:1.5rem;">📊 Reports</h1>
+                <p>Sales summary & customer data</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="showDash()">← Back</button>
+        </div>
+        <div class="reports-grid" id="reportsGrid"></div>
+        <h2 style="font-family:'Poppins',sans-serif;font-size:1rem;margin-bottom:10px;">👥 Customer Tracking</h2>
+        <div id="custList"><p style="text-align:center;color:var(--txt2);padding:20px;">No customer data yet</p></div>
+    </div>
+
+</div>
+
+<!-- ===== BILL PREVIEW MODAL ===== -->
+<div id="billModal" class="modal">
+    <div class="modal-box">
+        <div class="modal-title">🧾 Receipt Preview</div>
+        <div class="receipt-pre" id="receiptPre"></div>
+        <button class="btn btn-green btn-block" style="margin-bottom:8px;" onclick="printBill()">🖨️ Send to Printer</button>
+        <button class="btn btn-secondary btn-block btn-sm" onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+// ===== MENU DATA =====
+const MENU = {
+    'Veg Soup': [
+        {n:'Corn Soup',p:80},{n:'Manchow Soup',p:80},{n:'Hot & Sour Soup',p:80}
+    ],
+    'Non-Veg Soup': [
+        {n:'Chicken Corn Soup',p:95},{n:'Chicken Manchow',p:95},{n:'Chicken Hot & Sour',p:95}
+    ],
+    'Egg Starters': [
+        {n:'Egg 65',p:180},{n:'Egg Manchuria',p:180},{n:'Egg Burgi',p:100},{n:'Chilli Egg',p:180},{n:'Egg Omelette',p:70}
+    ],
+    'Veg Starters': [
+        {n:'Veg Manchuria',p:170},{n:'Gobi Manchuria',p:170},{n:'Gobi 65',p:170},{n:'Paneer 65',p:220},
+        {n:'Paneer Manchuria',p:220},{n:'Chilli Paneer',p:210},{n:'Baby Corn 65',p:180}
+    ],
+    'Chicken Starters': [
+        {n:'Chicken 65',p:220},{n:'Pepper Chicken',p:240},{n:'Chilli Chicken',p:220},{n:'Chicken Fry',p:240},
+        {n:'Chicken 777',p:240},{n:'Chilli Drumsticks',p:240},{n:'Chicken Manchuria',p:240},
+        {n:'Chicken Lollipop',p:250},{n:'Crispy Chicken',p:240}
+    ],
+    'Sea Food Starters': [
+        {n:'Appollo Fish',p:270},{n:'Chilli Fish',p:270},{n:'Chilli Prawns',p:280},
+        {n:'Lemon Fish',p:270},{n:'Prawns 65',p:280}
+    ],
+    'Tandoori': [
+        {n:'Tandoori Chicken Half',p:200},{n:'Tandoori Chicken Full',p:400},
+        {n:'Tangdi Kabab',p:300},{n:'Paneer Tikka',p:260}
+    ],
+    'Chinese Veg': [
+        {n:'Veg Soft Noodles',p:160},{n:'Veg Fried Rice',p:160},
+        {n:'Schezwan Fried Rice',p:180},{n:'Schezwan Noodles',p:180}
+    ],
+    'Chinese Non-Veg': [
+        {n:'Egg Soft Noodles',p:170},{n:'Chicken Soft Noodles',p:190},
+        {n:'Chicken Schezwan Noodles',p:200},{n:'Chicken Fried Rice',p:190}
+    ],
+    'Veg Curries': [
+        {n:'Dal Fry',p:160},{n:'Paneer Do Pyaza',p:230},{n:'Paneer Butter Masala',p:230},
+        {n:'Baby Corn Mushroom',p:230},{n:'Veg Kolhapuri',p:200},{n:'Kadai Paneer',p:230},{n:'Aloo Mutter',p:180}
+    ],
+    'Chicken Curries': [
+        {n:'Chicken Curry',p:230},{n:'Butter Chicken',p:230},{n:'Kadai Chicken',p:230},
+        {n:'Chicken Kolhapuri',p:250},{n:'Murg Musallam',p:450}
+    ],
+    'Mutton Curries': [
+        {n:'Mutton Masala',p:320},{n:'Mutton Curry',p:320}
+    ],
+    'Sea Food Curries': [
+        {n:'Fish Curry',p:280},{n:'Fish Masala',p:280},{n:'Prawns Curry',p:280}
+    ],
+    'Bread': [
+        {n:'Phulka',p:20},{n:'Chapathi',p:25},{n:'Tandoor Roti',p:30},
+        {n:'Butter Naan',p:40},{n:'Garlic Naan',p:50},{n:'Aloo Paratha',p:80}
+    ],
+    'Rice': [
+        {n:'Plain Rice',p:80},{n:'Lemon Rice',p:120},{n:'Tomato Rice',p:140},{n:'Zeera Rice',p:120}
+    ],
+    'Veg Biryanis': [
+        {n:'Veg Biryani',p:170},{n:'Kaju Biryani',p:200},{n:'Paneer Biryani',p:200},{n:'Veg Biryani Full',p:200}
+    ],
+    'Non-Veg Biryanis': [
+        {n:'Chicken Biryani Half',p:220},{n:'Chicken Biryani Full',p:250},
+        {n:'Gongura Chicken Biryani',p:250},{n:'Mutton Biryani',p:300},
+        {n:'Fish Biryani',p:280},{n:'Prawns Biryani',p:280}
+    ],
+    'Family Packs': [
+        {n:'Chicken Dum Family Pack',p:600},{n:'Veg Family Pack',p:400},
+        {n:'Chicken Jumbo',p:700},{n:'Mutton Jumbo',p:800}
+    ],
+    'Beverages': [
+        {n:'Water Bottle',p:20},{n:'Soft Drink',p:20},{n:'Lassi',p:50},{n:'Fresh Lime Soda',p:50}
+    ]
+};
+
+// ===== STATE =====
+let orders = JSON.parse(localStorage.getItem('rs_orders') || '{}');
+let customers = JSON.parse(localStorage.getItem('rs_customers') || '{}');
+let completedOrders = JSON.parse(localStorage.getItem('rs_completed') || '[]');
+let selTable = null;
+let selCat = null;
+let selPay = 'Cash';
+let btDevice = null;
+let currentReceipt = '';
+
+// ===== TOAST =====
+function toast(msg, err=false) {
+    const d = document.createElement('div');
+    d.className = 'toast' + (err ? ' err' : '');
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 2600);
+}
+
+// ===== NAVIGATION =====
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+}
+
+function showDash() {
+    showScreen('dash');
+    renderDash();
+}
+
+function showOrders(t) {
+    selTable = t;
+    selCat = null;
+    selPay = 'Cash';
+    document.getElementById('tableLabel').textContent = t;
+    document.getElementById('billTableLabel').textContent = t;
+    document.getElementById('discInput').value = '0';
+    document.getElementById('mobInput').value = '';
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('pay-Cash').classList.add('selected');
+    showScreen('orders');
+    renderCats();
+    renderBill();
+}
+
+function showReports() {
+    showScreen('reports');
+    renderReports();
+}
+
+// ===== DASHBOARD =====
+function renderDash() {
+    let activeOrders = Object.keys(orders).length;
+    let activeRev = 0, activeItems = 0;
+    Object.values(orders).forEach(items => {
+        items.forEach(i => { activeRev += i.p * i.q; activeItems += i.q; });
+    });
+
+    let todayRev = 0, todayItems = 0;
+    const today = new Date().toLocaleDateString();
+    completedOrders.filter(o => o.date === today).forEach(o => {
+        todayRev += o.total;
+        todayItems += o.itemCount;
+    });
+    todayRev += activeRev;
+    todayItems += activeItems;
+
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card">
+            <div class="stat-label">Active Orders</div>
+            <div class="stat-value">${activeOrders}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Today Revenue</div>
+            <div class="stat-value">₹${todayRev.toFixed(0)}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Items Sold</div>
+            <div class="stat-value">${todayItems}</div>
+        </div>`;
+
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+        const items = orders[i];
+        const occupied = items && items.length > 0;
+        let amt = '';
+        if (occupied) {
+            const sub = items.reduce((s, x) => s + x.p * x.q, 0);
+            amt = `₹${sub}`;
+        }
+        html += `<button class="table-btn ${occupied ? 'occupied' : ''}" onclick="showOrders(${i})">
+            <span class="t-num">T${i}</span>
+            ${occupied ? `<span class="t-amt">${amt}</span>` : ''}
+        </button>`;
+    }
+    document.getElementById('tablesGrid').innerHTML = html;
+}
+
+// ===== CATEGORIES & ITEMS =====
+function renderCats() {
+    let html = '';
+    for (const cat of Object.keys(MENU)) {
+        html += `<button class="cat-btn ${selCat === cat ? 'active' : ''}" onclick="pickCat('${cat}')">${cat}</button>`;
+    }
+    document.getElementById('catsWrap').innerHTML = html;
+    renderItems();
+}
+
+function pickCat(cat) {
+    selCat = cat;
+    document.getElementById('catTitle').textContent = cat;
+    renderCats();
+}
+
+function renderItems() {
+    if (!selCat) {
+        document.getElementById('itemsGrid').innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--txt2);padding:30px;">Select a category above</p>';
+        return;
+    }
+    let html = '';
+    for (const item of MENU[selCat]) {
+        html += `<button class="item-card" onclick="addItem('${item.n.replace(/'/g,"\\'")}',${item.p})">
+            <div class="item-name">${item.n}</div>
+            <div class="item-price">₹${item.p}</div>
+        </button>`;
+    }
+    document.getElementById('itemsGrid').innerHTML = html;
+}
+
+// ===== ORDER MANAGEMENT =====
+function addItem(name, price) {
+    if (!selTable) return;
+    if (!orders[selTable]) orders[selTable] = [];
+    const existing = orders[selTable].find(x => x.n === name);
+    if (existing) existing.q++;
+    else orders[selTable].push({n: name, p: price, q: 1});
+    saveOrders();
+    renderBill();
+    toast(`+ ${name}`);
+}
+
+function changeQty(name, delta) {
+    if (!orders[selTable]) return;
+    const idx = orders[selTable].findIndex(x => x.n === name);
+    if (idx === -1) return;
+    orders[selTable][idx].q += delta;
+    if (orders[selTable][idx].q <= 0) orders[selTable].splice(idx, 1);
+    saveOrders();
+    renderBill();
+}
+
+function saveOrders() {
+    localStorage.setItem('rs_orders', JSON.stringify(orders));
+}
+
+// ===== BILL RENDERING =====
+function calcBill() {
+    const items = orders[selTable] || [];
+    const sub = items.reduce((s, x) => s + x.p * x.q, 0);
+    const disc = Math.min(100, Math.max(0, parseFloat(document.getElementById('discInput').value) || 0));
+    const discAmt = sub * disc / 100;
+    const afterDisc = sub - discAmt;
+    const gst = afterDisc * 0.05;
+    const total = afterDisc + gst;
+    return {items, sub, disc, discAmt, afterDisc, gst, total};
+}
+
+function recalc() { renderBill(); }
+
+function renderBill() {
+    const {items, sub, discAmt, afterDisc, gst, total} = calcBill();
+    if (items.length === 0) {
+        document.getElementById('billItems').innerHTML = '<p style="text-align:center;color:var(--txt2);padding:20px;font-size:0.8rem;">No items added</p>';
+    } else {
+        let html = '';
+        for (const item of items) {
+            html += `<div class="bill-item">
+                <div class="bill-item-row">
+                    <span class="bill-item-name">${item.n}</span>
+                    <span class="bill-item-price">₹${(item.p * item.q).toFixed(0)}</span>
+                </div>
+                <div class="qty-ctrl">
+                    <button class="qty-btn qty-minus" onclick="changeQty('${item.n.replace(/'/g,"\\'")}', -1)">−</button>
+                    <span class="qty-num">${item.q}</span>
+                    <button class="qty-btn qty-plus" onclick="changeQty('${item.n.replace(/'/g,"\\'")}', 1)">+</button>
+                </div>
+            </div>`;
+        }
+        document.getElementById('billItems').innerHTML = html;
+    }
+    document.getElementById('s-sub').textContent = `₹${sub.toFixed(2)}`;
+    document.getElementById('s-disc').textContent = `-₹${discAmt.toFixed(2)}`;
+    document.getElementById('s-after').textContent = `₹${afterDisc.toFixed(2)}`;
+    document.getElementById('s-gst').textContent = `₹${gst.toFixed(2)}`;
+    document.getElementById('s-total').textContent = `₹${total.toFixed(2)}`;
+}
+
+function selectPay(method) {
+    selPay = method;
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('pay-' + method).classList.add('selected');
+}
+
+// ===== RECEIPT =====
+function buildReceipt() {
+    const {items, sub, disc, discAmt, afterDisc, gst, total} = calcBill();
+    const mob = document.getElementById('mobInput').value.trim();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-IN');
+    const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+    const billNo = 'RS' + Date.now().toString().slice(-6);
+
+    let r = '';
+    r += '================================\n';
+    r += '      ROYAL SPICY RESTAURANT    \n';
+    r += '   Kondapur Road, Hyderabad     \n';
+    r += '      Ph: +91 88979 31711       \n';
+    r += '================================\n';
+    r += `Bill No : ${billNo}\n`;
+    r += `Date    : ${dateStr}  ${timeStr}\n`;
+    r += `Table   : T${selTable}\n`;
+    r += `Payment : ${selPay}\n`;
+    if (mob) r += `Mobile  : ${mob}\n`;
+    r += '--------------------------------\n';
+    r += 'Item                  Qty  Amt  \n';
+    r += '--------------------------------\n';
+    for (const item of items) {
+        const name = item.n.padEnd(20).slice(0,20);
+        const qty = String(item.q).padStart(3);
+        const amt = ('₹' + (item.p * item.q)).padStart(6);
+        r += `${name} ${qty} ${amt}\n`;
+    }
+    r += '--------------------------------\n';
+    r += `Subtotal              ${('₹' + sub.toFixed(2)).padStart(10)}\n`;
+    if (discAmt > 0) r += `Discount (${disc}%)       ${('-₹' + discAmt.toFixed(2)).padStart(10)}\n`;
+    r += `After Discount        ${('₹' + afterDisc.toFixed(2)).padStart(10)}\n`;
+    r += `GST (5%)              ${('₹' + gst.toFixed(2)).padStart(10)}\n`;
+    r += '================================\n';
+    r += `TOTAL                 ${('₹' + total.toFixed(2)).padStart(10)}\n`;
+    r += '================================\n';
+    r += '   Thank you for dining with us!\n';
+    r += '    Please visit again soon :)  \n';
+    r += '================================\n';
+    return r;
+}
+
+function previewBill() {
+    const items = orders[selTable] || [];
+    if (items.length === 0) { toast('Add items first!', true); return; }
+    currentReceipt = buildReceipt();
+    document.getElementById('receiptPre').textContent = currentReceipt;
+    document.getElementById('billModal').classList.add('open');
+}
+
+function closeModal() {
+    document.getElementById('billModal').classList.remove('open');
+}
+
+// ===== BLUETOOTH PRINTING =====
+async function printBill() {
+    const {total} = calcBill();
+    const mob = document.getElementById('mobInput').value.trim();
+
+    // Save completed order
+    const now = new Date();
+    completedOrders.push({
+        table: selTable, total: total,
+        itemCount: (orders[selTable] || []).reduce((s,x)=>s+x.q,0),
+        date: now.toLocaleDateString(), time: now.toLocaleTimeString(),
+        payment: selPay, mobile: mob
+    });
+    localStorage.setItem('rs_completed', JSON.stringify(completedOrders));
+
+    // Track customer
+    if (mob && mob.length >= 10) {
+        if (!customers[mob]) customers[mob] = {visits:0, totalSpent:0, lastVisit:''};
+        customers[mob].visits++;
+        customers[mob].totalSpent += total;
+        customers[mob].lastVisit = now.toLocaleDateString();
+        localStorage.setItem('rs_customers', JSON.stringify(customers));
+    }
+
+    // Try Bluetooth
+    if (navigator.bluetooth) {
+        try {
+            toast('🔍 Connecting to printer...');
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{services: ['000018f0-0000-1000-8000-00805f9b34fb']}],
+                optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+            const encoder = new TextEncoder();
+            const ESC = 0x1B, GS = 0x1D;
+            const init = new Uint8Array([ESC, 0x40]);
+            const cut = new Uint8Array([GS, 0x56, 0x01]);
+            const feed = new Uint8Array([ESC, 0x64, 0x04]);
+            await characteristic.writeValue(init);
+            const lines = currentReceipt.split('\n');
+            for (const line of lines) {
+                const data = encoder.encode(line + '\n');
+                await characteristic.writeValue(data);
+                await new Promise(r => setTimeout(r, 30));
+            }
+            await characteristic.writeValue(feed);
+            await characteristic.writeValue(cut);
+            toast('✅ Receipt printed!');
+        } catch (e) {
+            console.error(e);
+            toast('Printer not connected. Order saved!');
+        }
+    } else {
+        toast('Bluetooth not available. Order saved!');
+    }
+
+    // Clear table and close
+    delete orders[selTable];
+    saveOrders();
+    closeModal();
+    showDash();
+}
+
+// ===== CLEAR TABLE =====
+function clearTable() {
+    if (!orders[selTable] || orders[selTable].length === 0) { showDash(); return; }
+    if (confirm(`Clear all items from Table ${selTable}?`)) {
+        delete orders[selTable];
+        saveOrders();
+        toast(`Table ${selTable} cleared`);
+        showDash();
+    }
+}
+
+// ===== CLEAR ALL DATA =====
+function clearData() {
+    if (confirm('Clear ALL data? (Orders, customers, reports)\n\nThis cannot be undone.')) {
+        orders = {}; customers = {}; completedOrders = [];
+        localStorage.removeItem('rs_orders');
+        localStorage.removeItem('rs_customers');
+        localStorage.removeItem('rs_completed');
+        toast('All data cleared');
+        renderDash();
+    }
+}
+
+// ===== REPORTS =====
+function renderReports() {
+    const today = new Date().toLocaleDateString();
+    const todayOrders = completedOrders.filter(o => o.date === today);
+    const todayRev = todayOrders.reduce((s,o) => s+o.total, 0);
+    const avgBill = todayOrders.length ? (todayRev / todayOrders.length) : 0;
+    const todayItems = todayOrders.reduce((s,o) => s+o.itemCount, 0);
+    const totalCusts = Object.keys(customers).length;
+
+    document.getElementById('reportsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Today Revenue</div><div class="stat-value">₹${todayRev.toFixed(0)}</div></div>
+        <div class="stat-card"><div class="stat-label">Today Orders</div><div class="stat-value">${todayOrders.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Bill</div><div class="stat-value">₹${avgBill.toFixed(0)}</div></div>
+        <div class="stat-card"><div class="stat-label">Items Sold</div><div class="stat-value">${todayItems}</div></div>
+        <div class="stat-card"><div class="stat-label">Customers</div><div class="stat-value">${totalCusts}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value">₹${completedOrders.reduce((s,o)=>s+o.total,0).toFixed(0)}</div></div>`;
+
+    const sortedCusts = Object.entries(customers).sort((a,b) => b[1].totalSpent - a[1].totalSpent);
+    if (sortedCusts.length === 0) {
+        document.getElementById('custList').innerHTML = '<p style="text-align:center;color:var(--txt2);padding:20px;">No customer data yet</p>';
+    } else {
+        let html = '';
+        for (const [mob, data] of sortedCusts) {
+            html += `<div class="customer-row">
+                <div class="cust-info">
+                    <div class="cust-mobile">📱 ${mob}</div>
+                    <div class="cust-meta">Visits: ${data.visits} &nbsp;|&nbsp; Last: ${data.lastVisit}</div>
+                </div>
+                <div class="cust-spent">₹${data.totalSpent.toFixed(0)}</div>
+            </div>`;
+        }
+        document.getElementById('custList').innerHTML = html;
+    }
+}
+
+// ===== INIT =====
+renderDash();
+</script>
+</body>
+</html>
