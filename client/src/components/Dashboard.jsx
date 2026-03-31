@@ -31,8 +31,11 @@ export default function Dashboard() {
           <button className="btn btn-secondary btn-sm" onClick={() => navigateTo('reports')}>
             👥 Customers
           </button>
+          <button className="btn btn-dark btn-sm" onClick={() => navigateTo('admin')}>
+            ⚙️ Admin
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={handleClear}>
-            🗑 Clear
+            🗑
           </button>
         </div>
       </div>
